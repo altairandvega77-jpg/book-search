@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>책 검색 → 노션</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f2eb;
+    --surface: #ffffff;
+    --text: #1a1714;
+    --muted: #7a746a;
+    --accent: #2d5a3d;
+    --accent-light: #e8f0eb;
+    --border: #e0dbd2;
+    --danger: #c0392b;
+    --success: #2d5a3d;
+  }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  header h1 {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 1.8rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 0.4rem;
+  }
+
+  header p {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 300;
+  }
+
+  .search-box {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1.5rem;
+  }
+
+  .search-box input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.9rem;
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-box input:focus {
+    border-color: var(--accent);
+  }
+
+  .search-box input::placeholder { color: var(--muted); }
+
+  .btn {
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .btn-primary:hover { background: #1e3d2a; }
+  .btn-primary:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+
+  .btn-outline {
+    background: var(--surface);
+    color: var(--accent);
+    border: 1.5px solid var(--accent);
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.8rem;
+  }
+
+  .btn-outline:hover { background: var(--accent-light); }
+  .btn-outline:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .results { display: flex; flex-direction: column; gap: 10px; }
+
+  .book-card {
+    display: flex;
+    gap: 14px;
+    padding: 14px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    align-items: flex-start;
+  }
+
+  .book-card:hover { border-color: #b0aba2; }
+
+  .book-card.selected {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+
+  .book-cover {
+    width: 54px;
+    height: 76px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+    background: var(--border);
+  }
+
+  .cover-empty {
+    width: 54px;
+    height: 76px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    background: var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+  }
+
+  .book-info { flex: 1; min-width: 0; }
+
+  .book-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 5px;
+    color: var(--text);
+  }
+
+  .book-meta {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.7;
+    font-weight: 300;
+  }
+
+  .check {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    flex-shrink: 0;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .book-card.selected .check {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    font-size: 11px;
+  }
+
+  .status {
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.83rem;
+    margin-top: 10px;
+    text-align: center;
+  }
+
+  .status.loading { background: #f0ede6; color: var(--muted); }
+  .status.success { background: #e8f0eb; color: var(--success); font-weight: 500; }
+  .status.error { background: #fdf0ee; color: var(--danger); }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 1.5rem 0;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📚 책 검색</h1>
+    <p>검색 후 책을 선택하면 노션에 자동으로 저장돼요</p>
+  </header>
+
+  <div class="search-box">
+    <input type="text" id="query" placeholder="책 제목 또는 저자 검색..." onkeydown="if(event.key==='Enter') search()" />
+    <button class="btn btn-primary" onclick="search()" id="searchBtn">검색</button>
+  </div>
+
+  <div id="results"></div>
+  <div id="status"></div>
+</div>
+
+<script>
+const SEARCH_WEBHOOK = 'https://hook.eu1.make.com/ahxtqv5fdfhb9prb4sdiqh2x9tvvm541';
+const SAVE_WEBHOOK = 'https://hook.eu1.make.com/ytfjcel7amscv158qa035wusfag93e9f';
+
+let selected = null;
+
+async function search() {
+  const query = document.getElementById('query').value.trim();
+  if (!query) return;
+  const btn = document.getElementById('searchBtn');
+  btn.disabled = true; btn.textContent = '검색 중...';
+  setStatus('검색 중...', 'loading');
+  document.getElementById('results').innerHTML = '';
+  selected = null;
+
+  try {
+    const res = await fetch(SEARCH_WEBHOOK + '?query=' + encodeURIComponent(query));
+    const data = await res.json();
+    const books = data.documents || [];
+    if (!books.length) { setStatus('검색 결과가 없어요.', 'loading'); }
+    else { renderBooks(books); clearStatus(); }
+  } catch(e) {
+    setStatus('검색 오류가 발생했어요. 다시 시도해주세요.', 'error');
+  }
+  btn.disabled = false; btn.textContent = '검색';
+}
+
+function renderBooks(books) {
+  const container = document.getElementById('results');
+  container.innerHTML = books.map((b, i) => {
+    const title = b.title || '제목 없음';
+    const authors = (b.authors || []).join(', ') || '저자 미상';
+    const publisher = b.publisher || '출판사 미상';
+    const thumb = b.thumbnail || '';
+    const coverHtml = thumb
+      ? `<img class="book-cover" src="${thumb}" alt="${esc(title)}" />`
+      : `<div class="cover-empty">📖</div>`;
+    return `<div class="book-card" onclick="selectBook(this, ${i})" data-title="${esc(title)}" data-authors="${esc(authors)}" data-publisher="${esc(publisher)}" data-thumb="${esc(thumb)}">
+      ${coverHtml}
+      <div class="book-info">
+        <div class="book-title">${esc(title)}</div>
+        <div class="book-meta">${esc(authors)}<br>${esc(publisher)}</div>
+      </div>
+      <div class="check" id="chk-${i}"></div>
+    </div>`;
+  }).join('');
+  container.innerHTML += `<button class="btn btn-outline" onclick="save()" id="saveBtn" disabled>노션에 저장하기</button>`;
+}
+
+function selectBook(el, i) {
+  document.querySelectorAll('.book-card').forEach((c, j) => {
+    c.classList.remove('selected');
+    const chk = document.getElementById('chk-' + j);
+    if (chk) chk.textContent = '';
+  });
+  el.classList.add('selected');
+  const chk = document.getElementById('chk-' + i);
+  if (chk) chk.textContent = '✓';
+  selected = { title: el.dataset.title, authors: el.dataset.authors, publisher: el.dataset.publisher, thumbnail: el.dataset.thumb };
+  document.getElementById('saveBtn').disabled = false;
+  clearStatus();
+}
+
+async function save() {
+  if (!selected) return;
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true; btn.textContent = '저장 중...';
+  setStatus('노션에 저장하는 중...', 'loading');
+  try {
+    const res = await fetch(SAVE_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(selected)
+    });
+    if (res.ok) { setStatus('✓ 노션에 저장됐어요!', 'success'); }
+    else { setStatus('저장 실패. 노션 DB 설정을 확인해주세요.', 'error'); }
+  } catch(e) {
+    setStatus('네트워크 오류가 발생했어요.', 'error');
+  }
+  btn.disabled = false; btn.textContent = '노션에 저장하기';
+}
+
+function setStatus(msg, type) {
+  document.getElementById('status').innerHTML = `<div class="status ${type}">${msg}</div>`;
+}
+function clearStatus() { document.getElementById('status').innerHTML = ''; }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+</script>
+</body>
+</html>
